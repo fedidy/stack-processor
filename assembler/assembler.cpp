@@ -12,18 +12,27 @@ int main(const int argc, const char* argv[]) {
     if (argc < 3)
         return -fprintf(stderr, "%s:%d: No filename, bro\n", __FILE__, __LINE__);
 
+    Assemble(argv[1], argv[2]);
+
+    return 0;
+}
+
+
+int Assemble(const char* input_file, const char* output_file) {
     assembler ass = {};
+
     if (AssemblerInit(&ass)) {abort();}
 
-    if (FileCopy(&ass.input_code, argv[1])) {abort();}
+    if (FileCopy(&ass.input_code, input_file)) {abort();}
 
-    ParseText(&ass);
+    ParseText(&ass); // первый проход
+    AssemblerCleaner(&ass);
+    ParseText(&ass); // второй проход
 
-    CodeOutput(&ass, argv[2]);
+    CodeOutput(&ass, output_file);
 
     AssDestructor(&ass);
 
-    free(ass.input_code.file_copy);
     return 0;
 }
 
@@ -39,7 +48,37 @@ int AssemblerInit(assembler *ass) {
     if (ass->code == NULL) {return -fprintf(stderr, "%s:%d: Couldn't initialize ass->code\n", __FILE__, __LINE__);}
     ass->cap_code = BASE_CODE_LENGTH;
     ass->size_code = 0;
+
+    for (int i = 0; i < LABELS_SIZE; i++) {
+        ass->labels[i] = 0;
+    }
+
     return 0;
+}
+
+void AssemblerCleaner(assembler *ass) {
+    assert(ass);
+
+    for (size_t i = 0; i < ass->cap_code; i++) {
+        ass->code[i] = NO_DATA;
+    }
+    ass->size_code = 0;
+    ass->input_code.file_ind = 0;
+}
+
+void AssDestructor(assembler *ass) {
+    assert(ass);
+
+    free(ass->code);
+    ass->size_code = 0;
+    ass->cap_code = 0;
+    ass->input_code.file_ind = 0;
+    free(ass->input_code.file_copy);
+    ass->input_code.file_length = 0;
+
+    for (int i = 0; i < LABELS_SIZE; i++) {
+        ass->labels[i] = 0;
+    }
 }
 
 
@@ -63,6 +102,10 @@ int ParseText(assembler *ass) {
             else if (symb == ' ') {
                 ass->input_code.file_ind++;
             }
+            else if (symb == ':') {
+                UseLabel(ass);
+                expected_arg--;
+            }
             else {
                 fprintf(stderr, "%s:%d: Got not expected symb (wanted argument): %c\n", __FILE__, __LINE__, symb);
                 abort();
@@ -84,6 +127,9 @@ int ParseText(assembler *ass) {
             else if (isspace(symb)) {
                 //if (expected_arg != 0) {return -fprintf(stderr, "%s:%d: Line ended when expected_arg = %d\n", __FILE__, __LINE__, expected_arg);}
                 ass->input_code.file_ind++;
+            }
+            else if (symb == ':') {
+                GetLabel(ass);
             }
             else {
                 fprintf(stderr, "%s:%d: Got not expected symb: %c\n", __FILE__, __LINE__, symb);
@@ -126,14 +172,14 @@ int RecognizeCmd(const char cmd[], int *expected_arg) {
     if (!strcmp(cmd, "DIV")) {return DIV;}
     if (!strcmp(cmd, "MULT")) {return MULT;}
     if (!strcmp(cmd, "OUT")) {return OUT;}
-    if (!strcmp(cmd, "JMP")) {return JMP;}
-    if (!strcmp(cmd, "JA")) {return JA;}
-    if (!strcmp(cmd, "JAE")) {return JAE;}
-    if (!strcmp(cmd, "JB")) {return JB;}
-    if (!strcmp(cmd, "JBE")) {return JBE;}
-    if (!strcmp(cmd, "JE")) {return JE;}
-    if (!strcmp(cmd, "JNE")) {return JNE;}
-    if (!strcmp(cmd, "JPORTKI")) {return JPORTKI;}
+    if (!strcmp(cmd, "JMP")) {*expected_arg = 1; return JMP;}
+    if (!strcmp(cmd, "JA")) {*expected_arg = 1; return JA;}
+    if (!strcmp(cmd, "JAE")) {*expected_arg = 1; return JAE;}
+    if (!strcmp(cmd, "JB")) {*expected_arg = 1; return JB;}
+    if (!strcmp(cmd, "JBE")) {*expected_arg = 1; return JBE;}
+    if (!strcmp(cmd, "JE")) {*expected_arg = 1; return JE;}
+    if (!strcmp(cmd, "JNE")) {*expected_arg = 1; return JNE;}
+    if (!strcmp(cmd, "JPORTKI")) {*expected_arg = 1; return JPORTKI;}
     if (!strcmp(cmd, "DUMP")) {return DUMP;}
     if (!strcmp(cmd, "TOP")) {return TOP;}
     else return -fprintf(stderr, "%s:%d: Unknown command: \"%s\"\n", __FILE__, __LINE__, cmd);
@@ -226,6 +272,47 @@ void SkipLine(assembler *ass) {
 }
 
 
+int GetLabel(assembler *ass) {
+    assert(ass);
+
+    ass->input_code.file_ind++;
+
+    int flag_num = 0;
+    int symb_num = 0;
+    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &flag_num, &symb_num))
+        return -fprintf(stderr, "%s:%d: Can't scan arg\n", __FILE__, __LINE__);
+    if (symb_num < 0) {abort();}
+
+    ass->input_code.file_ind += (unsigned) symb_num;
+
+    ass->labels[flag_num] = (int) ass->size_code;
+
+    ass->input_code.file_ind++;
+
+    return 0;
+}
+
+int UseLabel(assembler *ass) {
+    assert(ass);
+
+    ass->input_code.file_ind++;
+
+    int flag_num = 0;
+    int symb_num = 0;
+    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &flag_num, &symb_num))
+        return -fprintf(stderr, "%s:%d: Can't scan arg\n", __FILE__, __LINE__);
+    if (symb_num < 0) {abort();}
+
+    ass->input_code.file_ind += (unsigned) symb_num;
+
+    PushCode(ass, ass->labels[flag_num]);
+
+    ass->input_code.file_ind++;
+
+    return 0;
+}
+
+
 void CodeOutput(assembler *ass, const char *filename) {
     assert(ass);
 
@@ -235,61 +322,3 @@ void CodeOutput(assembler *ass, const char *filename) {
         fprintf(fp, "%d ", ass->code[i]);
     }
 }
-
-
-void AssDestructor(assembler *ass) {
-    assert(ass);
-
-    free(ass->code);
-    ass->size_code = 0;
-    ass->cap_code = 0;
-    ass->input_code.file_ind = 0;
-    //free(ass->input_code.file_copy);
-    //ass->input_code.file_length = 0;
-
-}
-
-
-/*
-int ParseText(assembler *ass) {
-    char cmd[MAX_CMD_LENGTH + 1] = "";
-    int arg = 0;
-    int cnt = 0;
-
-    int symb_num = 0;
-    printf("filecopy size: %zu\n", strlen(ass->filecopy));
-    printf("file_length: %d\n", (int) ass->input_code.file_length);
-    char* line_pointer = ass->filecopy;
-
-    do {
-        if (sscanf(line_pointer, "%s%n", cmd, &symb_num) < 0) {
-            break;
-        }
-        else {
-            line_pointer += symb_num;
-        }
-        fprintf(stderr, "line = %s\n", line_pointer);
-        if (sscanf(line_pointer, "%d%n", &arg, &symb_num) < 0) {
-            cnt = 1;
-        }
-        else {
-            line_pointer += symb_num;
-            cnt = 2;
-        }
-        fprintf(stderr, "line = %s\n", line_pointer);
-        fprintf(stderr, "cmd = %s, arg = %d, cnt = %d\n", cmd, arg, cnt);
-        switch(cnt) {
-            case 1:
-                ass->code[ip++] = RecognizeCmd(cmd);
-                break;
-            case 2:
-                ass->code[ip++] = RecognizeCmd(cmd);
-                ass->code[ip++] = arg;
-                break;
-            default:
-                abort();
-        }
-    } while(cnt);
-    return 0;
-}
-*/
