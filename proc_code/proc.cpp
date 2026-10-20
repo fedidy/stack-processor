@@ -89,6 +89,7 @@ int RunCode(processor *proc) {
         if (RunCommand(proc) == HLT_VAL) {
             return 0;
         }
+        WAIT_INP
     }
     fprintf(stderr, "Code ended w/o HLT\n");
     return -1;

@@ -37,6 +37,8 @@ MODE ?= proc
 
 BINARY ?= 0
 
+STEP ?= 0
+
 ifeq ($(MODE), proc)
 	CODE = ${PROC_CODE}
 	NAME = proc
@@ -45,5 +47,7 @@ else ifeq ($(MODE), assembler)
 	NAME = assembler
 endif
 
+CFLAGS += -D BINARY=${BINARY} -D STEP_BY_STEP=${STEP}
+
 ${NAME}.out: ${CODE} ${STACK_CODE} ${SHARED_CODE}
-	@${CC} ${CFLAGS} -D BINARY=${BINARY} $^ -o $@
+	@${CC} ${CFLAGS} $^ -o $@

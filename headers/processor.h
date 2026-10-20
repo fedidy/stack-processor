@@ -4,9 +4,12 @@
 #include <stdio.h>
 #include "stack.h"
 
-/*
-#define STEP_BY_STEP
-*/
+#if STEP_BY_STEP > 0
+    #define WAIT_INP getchar();
+#else
+    #define WAIT_INP
+#endif
+
 
 enum _cmds {
     HLT = 0,
