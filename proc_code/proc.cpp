@@ -35,8 +35,11 @@ void ProcessorInit(processor *proc) {
     proc->code_length = 0;
     proc->ip = 0;
     proc->stack = (Stack_t*) malloc(sizeof(Stack_t));
-
     StackCtor(proc->stack, BASE_LENGTH, "stack");
+
+    for (int i = 0; i < REGISTER_SIZE; i++) {
+        proc->reg[i] = 0;
+    }
 }
 
 void ProcessorDtor(processor *proc) {
@@ -45,8 +48,11 @@ void ProcessorDtor(processor *proc) {
     free(proc->code);
     proc->code_length = 0;
     proc->ip = 0;
-
     StackDtor(proc->stack);
+
+    for (int i = 0; i < REGISTER_SIZE; i++) {
+        proc->reg[i] = 0;
+    }
 }
 
 
@@ -66,7 +72,7 @@ int ParseCode(const char *filename, processor *proc) {
         //printf("ind = %zu, cmd = %d\n", ind, cmd);
         proc->code[ind] = cmd;
         ind++;
-        cmd = -1;
+        //cmd = -1;
     }
 #else
 
@@ -80,10 +86,12 @@ int RunCode(processor *proc) {
     assert(proc);
 
     while (proc->ip < proc->code_length) {
-        if (RunCommand(proc))
-            break;
+        if (RunCommand(proc) == HLT_VAL) {
+            return 0;
+        }
     }
-    return 0;
+    fprintf(stderr, "Code ended w/o HLT\n");
+    return -1;
 }
 
 int RunCommand(processor *proc) {
@@ -94,6 +102,10 @@ int RunCommand(processor *proc) {
             return CmdHLT(proc);
         case PUSH:
             return CmdPUSH(proc);
+        case PUSH_R:
+            return CmdPUSHr(proc);
+        case POP:
+            return CmdPOP(proc);
         case ADD:
             return CmdADD(proc);
         case SUB:

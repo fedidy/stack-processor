@@ -2,12 +2,26 @@
 #include "../headers/cmds.h"
 
 int CmdHLT(...) {
-    return 1;
+    return HLT_VAL;
 }
 
 int CmdPUSH(processor *proc) {
     proc->ip++;
     StackPush(proc->stack, proc->code[proc->ip]);
+    proc->ip++;
+    return 0;
+}
+
+int CmdPUSHr(processor *proc) {
+    proc->ip++;
+    StackPush(proc->stack, proc->reg[proc->code[proc->ip]]);
+    proc->ip++;
+    return 0;
+}
+
+int CmdPOP(processor *proc) {
+    proc->ip++;
+    StackPop(proc->stack, &proc->reg[proc->code[proc->ip]]);
     proc->ip++;
     return 0;
 }

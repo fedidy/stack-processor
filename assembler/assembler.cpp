@@ -49,31 +49,46 @@ int ParseText(assembler *ass) {
     int expected_arg = 0;
     while (ass->input_code.file_ind < (size_t) ass->input_code.file_length) {
         symb = ass->input_code.file_copy[ass->input_code.file_ind];
-        if (symb == '\0') {
-            break;
-        }
-        else if (isalpha(symb)) {
-            if (expected_arg != 0) {return -fprintf(stderr, "%s:%d: Got command when expected_arg = %d\n", __FILE__, __LINE__, expected_arg);}
-            expected_arg = ParseCmd(ass);
-        }
-        else if (isdigit(symb)) {
-            //fprintf(stderr, "%s:%d: symb = %c, expected_arg = %d\n", __FILE__, __LINE__, symb, expected_arg);
-            ParseArg(ass);
-            expected_arg--;
-        }
-        else if (symb == ';') {
-            SkipLine(ass);
-        }
-        else if (symb == '\n') {
-            if (expected_arg != 0) {return -fprintf(stderr, "%s:%d: Line ended when expected_arg = %d\n", __FILE__, __LINE__, expected_arg);}
-            ass->input_code.file_ind++;
-        }
-        else if (symb == ' ') {
-            ass->input_code.file_ind++;
+        if (expected_arg != 0) {
+            if (isdigit(symb)) {
+                //fprintf(stderr, "%s:%d: symb = %c, expected_arg = %d\n", __FILE__, __LINE__, symb, expected_arg);
+                if (ParseArg(ass) < 0) {return -1;}
+                expected_arg--;
+            }
+            else if (isalpha(symb)) {
+                if (ass->code[ass->size_code - 1] == PUSH) {ass->code[ass->size_code - 1] = PUSH_R;}
+                if (ParseVarArg(ass) < 0) {return -1;}
+                expected_arg--;
+            }
+            else if (symb == ' ') {
+                ass->input_code.file_ind++;
+            }
+            else {
+                fprintf(stderr, "%s:%d: Got not expected symb (wanted argument): %c\n", __FILE__, __LINE__, symb);
+                abort();
+            }
         }
         else {
-            fprintf(stderr, "%s:%d: Got not expected symb: %c\n", __FILE__, __LINE__, symb);
-            abort();
+            if (isalpha(symb)) {
+                expected_arg = ParseCmd(ass);
+            }
+            else if (symb == '\0') {
+                break;
+            }
+            else if (isdigit(symb)) {
+                return -fprintf(stderr, "%s:%d: Got num argument when command expected: expected_arg = %d\n", __FILE__, __LINE__, expected_arg);
+            }
+            else if (symb == ';') {
+                SkipLine(ass);
+            }
+            else if (isspace(symb)) {
+                //if (expected_arg != 0) {return -fprintf(stderr, "%s:%d: Line ended when expected_arg = %d\n", __FILE__, __LINE__, expected_arg);}
+                ass->input_code.file_ind++;
+            }
+            else {
+                fprintf(stderr, "%s:%d: Got not expected symb: %c\n", __FILE__, __LINE__, symb);
+                abort();
+            }
         }
     }
     if (expected_arg != 0) return -fprintf(stderr, "%s:%d: By the end of parsing expected_arg = %d\n", __FILE__, __LINE__, expected_arg);
@@ -98,9 +113,14 @@ int ParseCmd(assembler *ass) {
     return expected_arg;
 }
 
-int RecognizeCmd(char cmd[], int *expected_arg) {
+int RecognizeCmd(const char cmd[], int *expected_arg) {
+    assert(expected_arg);
+    assert(cmd);
+
     if (!strcmp(cmd, "HLT")) {return HLT;}
     if (!strcmp(cmd, "PUSH")) {*expected_arg = 1; return PUSH;}
+    if (!strcmp(cmd, "PUSHr")) {*expected_arg = 1; return PUSH_R;}
+    if (!strcmp(cmd, "POP")) {*expected_arg = 1; return POP;}
     if (!strcmp(cmd, "ADD")) {return ADD;}
     if (!strcmp(cmd, "SUB")) {return SUB;}
     if (!strcmp(cmd, "DIV")) {return DIV;}
@@ -121,13 +141,40 @@ int RecognizeCmd(char cmd[], int *expected_arg) {
 
 
 int ParseArg(assembler *ass) {
+    assert(ass);
+
     int arg = 0;
     int symb_num = 0;
-    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &arg, &symb_num)) return -fprintf(stderr, "%s:%d: Can't scan arg\n", __FILE__, __LINE__);
+    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &arg, &symb_num))
+        return -fprintf(stderr, "%s:%d: Can't scan arg\n", __FILE__, __LINE__);
     if (symb_num < 0) {abort();}
 
     ass->input_code.file_ind += (unsigned) symb_num;
     return PushCode(ass, arg);
+}
+
+
+int ParseVarArg(assembler *ass) {
+    assert(ass);
+
+    char var_name[MAX_VAR_LENGTH + 1] = "";
+    int ind = 0;
+    while (isalpha(ass->input_code.file_copy[ass->input_code.file_ind])) {
+        var_name[ind] = ass->input_code.file_copy[ass->input_code.file_ind];
+        ind++;
+        ass->input_code.file_ind++;
+    }
+    int var = RecognizeVar(var_name);
+    if (var < 0) return -1;
+    return PushCode(ass, var);
+}
+
+int RecognizeVar(const char var_name[]) {
+    assert(var_name);
+
+    int var = var_name[0] - 'A';
+
+    return var;
 }
 
 
@@ -171,9 +218,11 @@ int CodeRecalloc(assembler *ass) {
 void SkipLine(assembler *ass) {
     assert(ass);
 
-    while(isspace(ass->input_code.file_copy[ass->input_code.file_ind])) {
+    while(ass->input_code.file_copy[ass->input_code.file_ind] != '\n') {
         ass->input_code.file_ind++;
     }
+
+    ass->input_code.file_ind++;
 }
 
 

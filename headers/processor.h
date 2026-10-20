@@ -11,7 +11,8 @@
 enum _cmds {
     HLT = 0,
     PUSH = 1,
-    PUSHr = 2,
+    PUSH_R = 2,
+    POP = 3,
     ADD = 4,
     SUB = 5,
     DIV = 6,
@@ -35,14 +36,18 @@ typedef struct _file_info {
     size_t file_ind;
 } file_info;
 
+const int REGISTER_SIZE = 26;
 typedef struct _processor {
     int *code;
     size_t code_length;
     size_t ip;
     Stack_t *stack;
+    int reg[REGISTER_SIZE];
 } processor;
 
 const int MAX_CMD_LENGTH = 10;
+const int MAX_VAR_LENGTH = 2;
+const int HLT_VAL = 6767;
 
 
 #endif

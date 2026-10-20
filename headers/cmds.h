@@ -5,6 +5,8 @@
 
 int CmdHLT(...);
 int CmdPUSH(processor *proc);
+int CmdPUSHr(processor *proc);
+int CmdPOP(processor *proc);
 int CmdADD(processor *proc);
 int CmdSUB(processor *proc);
 int CmdDIV(processor *proc);
