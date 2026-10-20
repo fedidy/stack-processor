@@ -84,6 +84,7 @@ int CmdJA(processor *proc) {
     }
     else {
         proc->ip++;
+        proc->ip++;
         return 0;
     }
 }
@@ -96,6 +97,7 @@ int CmdJAE(processor *proc) {
         return CmdJMP(proc);
     }
     else {
+        proc->ip++;
         proc->ip++;
         return 0;
     }
@@ -110,6 +112,7 @@ int CmdJB(processor *proc) {
     }
     else {
         proc->ip++;
+        proc->ip++;
         return 0;
     }
 }
@@ -122,6 +125,7 @@ int CmdJBE(processor *proc) {
         return CmdJMP(proc);
     }
     else {
+        proc->ip++;
         proc->ip++;
         return 0;
     }
@@ -136,6 +140,7 @@ int CmdJE(processor *proc) {
     }
     else {
         proc->ip++;
+        proc->ip++;
         return 0;
     }
 }
@@ -148,6 +153,7 @@ int CmdJNE(processor *proc) {
         return CmdJMP(proc);
     }
     else {
+        proc->ip++;
         proc->ip++;
         return 0;
     }
