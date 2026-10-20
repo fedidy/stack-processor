@@ -136,7 +136,7 @@ int RunCommand(processor *proc) {
         case TOP:
             return CmdTOP(proc);
         default:
-            fprintf(stderr, "%s:%d: Got unknown command", __FILE__, __LINE__);
+            fprintf(stderr, "%s:%d: Got unknown command: %d", __FILE__, __LINE__, proc->code[proc->ip]);
             abort();
     }
 }
