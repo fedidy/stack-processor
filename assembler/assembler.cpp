@@ -107,6 +107,15 @@ int RecognizeCmd(char cmd[], int *expected_arg) {
     if (!strcmp(cmd, "MULT")) {return MULT;}
     if (!strcmp(cmd, "OUT")) {return OUT;}
     if (!strcmp(cmd, "JMP")) {return JMP;}
+    if (!strcmp(cmd, "JA")) {return JA;}
+    if (!strcmp(cmd, "JAE")) {return JAE;}
+    if (!strcmp(cmd, "JB")) {return JB;}
+    if (!strcmp(cmd, "JBE")) {return JBE;}
+    if (!strcmp(cmd, "JE")) {return JE;}
+    if (!strcmp(cmd, "JNE")) {return JNE;}
+    if (!strcmp(cmd, "JPORTKI")) {return JPORTKI;}
+    if (!strcmp(cmd, "DUMP")) {return DUMP;}
+    if (!strcmp(cmd, "TOP")) {return TOP;}
     else return -fprintf(stderr, "%s:%d: Unknown command: \"%s\"\n", __FILE__, __LINE__, cmd);
 }
 

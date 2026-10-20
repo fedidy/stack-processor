@@ -106,18 +106,24 @@ int RunCommand(processor *proc) {
             return CmdOUT(proc);
         case JMP:
             return CmdJMP(proc);
-
-        /*
-        JA = 8,
-        JAE = 9,
-        JB = 10,
-        JE = 11,
-        JNE = 12,
-        JPORTKI = 13,
-        STDUMP = 14,
-        TOP = 15
-        */
+        case JA:
+            return CmdJA(proc);
+        case JAE:
+            return CmdJAE(proc);
+        case JB:
+            return CmdJB(proc);
+        case JBE:
+            return CmdJBE(proc);
+        case JE:
+            return CmdJE(proc);
+        case JNE:
+            return CmdJNE(proc);
+        case DUMP:
+            return CmdDUMP(proc);
+        case TOP:
+            return CmdTOP(proc);
         default:
+            fprintf(stderr, "%s:%d: Got unknown command", __FILE__, __LINE__);
             abort();
     }
 }

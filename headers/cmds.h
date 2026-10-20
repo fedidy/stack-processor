@@ -4,13 +4,20 @@
 #include "processor.h"
 
 int CmdHLT(...);
-int CmdPUSH(struct _processor *proc);
-int CmdADD(struct _processor *proc);
-int CmdSUB(struct _processor *proc);
-int CmdDIV(struct _processor *proc);
-int CmdMULT(struct _processor *proc);
-int CmdOUT(struct _processor *proc);
-int CmdJMP(struct _processor *proc);
-
+int CmdPUSH(processor *proc);
+int CmdADD(processor *proc);
+int CmdSUB(processor *proc);
+int CmdDIV(processor *proc);
+int CmdMULT(processor *proc);
+int CmdOUT(processor *proc);
+int CmdJMP(processor *proc);
+int CmdJA(processor *proc);
+int CmdJAE(processor *proc);
+int CmdJB(processor *proc);
+int CmdJBE(processor *proc);
+int CmdJE(processor *proc);
+int CmdJNE(processor *proc);
+int CmdDUMP(processor *proc);
+int CmdTOP(processor *proc);
 
 #endif

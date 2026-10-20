@@ -1,6 +1,5 @@
 #include "../headers/processor.h"
 #include "../headers/cmds.h"
-#include <stdio.h>
 
 int CmdHLT(...) {
     return 1;
@@ -52,12 +51,119 @@ int CmdMULT(processor *proc) {
 int CmdOUT(processor *proc) {
     int a = 0;
     StackPop(proc->stack, &a);
-    printf(PRINT_DATA "\n", a);
+    printf("%d\n", a);
     proc->ip++;
     return 0;
 }
 
 int CmdJMP(processor *proc) {
     proc->ip = (size_t) proc->code[proc->ip + 1];
+    return 0;
+}
+
+int CmdJA(processor *proc) {
+    int a = 0, b = 0;
+    StackPop(proc->stack, &a);
+    StackPop(proc->stack, &b);
+    if (a > b) {
+        return CmdJMP(proc);
+    }
+    else {
+        proc->ip++;
+        return 0;
+    }
+}
+
+int CmdJAE(processor *proc) {
+    int a = 0, b = 0;
+    StackPop(proc->stack, &a);
+    StackPop(proc->stack, &b);
+    if (a >= b) {
+        return CmdJMP(proc);
+    }
+    else {
+        proc->ip++;
+        return 0;
+    }
+}
+
+int CmdJB(processor *proc) {
+    int a = 0, b = 0;
+    StackPop(proc->stack, &a);
+    StackPop(proc->stack, &b);
+    if (a < b) {
+        return CmdJMP(proc);
+    }
+    else {
+        proc->ip++;
+        return 0;
+    }
+}
+
+int CmdJBE(processor *proc) {
+    int a = 0, b = 0;
+    StackPop(proc->stack, &a);
+    StackPop(proc->stack, &b);
+    if (a <= b) {
+        return CmdJMP(proc);
+    }
+    else {
+        proc->ip++;
+        return 0;
+    }
+}
+
+int CmdJE(processor *proc) {
+    int a = 0, b = 0;
+    StackPop(proc->stack, &a);
+    StackPop(proc->stack, &b);
+    if (a == b) {
+        return CmdJMP(proc);
+    }
+    else {
+        proc->ip++;
+        return 0;
+    }
+}
+
+int CmdJNE(processor *proc) {
+    int a = 0, b = 0;
+    StackPop(proc->stack, &a);
+    StackPop(proc->stack, &b);
+    if (a != b) {
+        return CmdJMP(proc);
+    }
+    else {
+        proc->ip++;
+        return 0;
+    }
+}
+
+/*
+int CmdJPORTKI(processor *proc) {
+    int a = 0, b = 0;
+    StackPop(proc->stack, &a);
+    StackPop(proc->stack, &b);
+    if () {
+        return CmdJMP(proc);
+    }
+    else {
+        proc->ip++;
+        return 0;
+    }
+}
+*/
+
+int CmdDUMP(processor *proc) {
+    StackDump(proc->stack);
+    proc->ip++;
+    return 0;
+}
+
+int CmdTOP(processor *proc) {
+    int a = 0;
+    StackTop(proc->stack, &a);
+    printf("%d\n", a);
+    proc->ip++;
     return 0;
 }

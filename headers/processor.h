@@ -8,25 +8,25 @@
 #define STEP_BY_STEP
 */
 
- #define BINARY 0
-
 enum _cmds {
     HLT = 0,
     PUSH = 1,
-    ADD = 2,
-    SUB = 3,
-    DIV = 4,
-    MULT = 5,
-    OUT = 6,
-    JMP = 7,
-    JA = 8,
-    JAE = 9,
-    JB = 10,
-    JE = 11,
-    JNE = 12,
-    JPORTKI = 13,
-    STDUMP = 14,
-    TOP = 15
+    PUSHr = 2,
+    ADD = 4,
+    SUB = 5,
+    DIV = 6,
+    MULT = 7,
+    OUT = 8,
+    JMP = 16,
+    JA,
+    JAE,
+    JB ,
+    JBE,
+    JE,
+    JNE,
+    JPORTKI,
+    DUMP = 42,
+    TOP = 67
 };
 
 typedef struct _file_info {
@@ -42,7 +42,7 @@ typedef struct _processor {
     Stack_t *stack;
 } processor;
 
-const int MAX_CMD_LENGTH = 4;
+const int MAX_CMD_LENGTH = 10;
 
 
 #endif
