@@ -35,6 +35,8 @@ endif
 
 MODE ?= proc
 
+BINARY ?= 0
+
 ifeq ($(MODE), proc)
 	CODE = ${PROC_CODE}
 	NAME = proc
@@ -44,4 +46,4 @@ else ifeq ($(MODE), assembler)
 endif
 
 ${NAME}.out: ${CODE} ${STACK_CODE} ${SHARED_CODE}
-	@${CC} ${CFLAGS} $^ -o $@
+	@${CC} ${CFLAGS} -D BINARY=${BINARY} $^ -o $@
