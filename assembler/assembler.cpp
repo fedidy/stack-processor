@@ -277,15 +277,15 @@ int GetLabel(assembler *ass) {
 
     ass->input_code.file_ind++;
 
-    int flag_num = 0;
+    int label_num = 0;
     int symb_num = 0;
-    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &flag_num, &symb_num))
+    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &label_num, &symb_num))
         return -fprintf(stderr, "%s:%d: Can't scan arg\n", __FILE__, __LINE__);
     if (symb_num < 0) {abort();}
 
     ass->input_code.file_ind += (unsigned) symb_num;
 
-    ass->labels[flag_num] = (int) ass->size_code;
+    ass->labels[label_num] = (int) ass->size_code;
 
     ass->input_code.file_ind++;
 
@@ -297,15 +297,15 @@ int UseLabel(assembler *ass) {
 
     ass->input_code.file_ind++;
 
-    int flag_num = 0;
+    int label_num = 0;
     int symb_num = 0;
-    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &flag_num, &symb_num))
+    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &label_num, &symb_num))
         return -fprintf(stderr, "%s:%d: Can't scan arg\n", __FILE__, __LINE__);
     if (symb_num < 0) {abort();}
 
     ass->input_code.file_ind += (unsigned) symb_num;
 
-    PushCode(ass, ass->labels[flag_num]);
+    PushCode(ass, ass->labels[label_num]);
 
     ass->input_code.file_ind++;
 
