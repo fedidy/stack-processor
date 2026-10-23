@@ -36,6 +36,8 @@ void ProcessorInit(processor *proc) {
     proc->ip = 0;
     proc->stack = (Stack_t*) malloc(sizeof(Stack_t));
     StackCtor(proc->stack, BASE_LENGTH, "stack");
+    proc->func_st = (Stack_t*) malloc(sizeof(Stack_t));
+    StackCtor(proc->func_st, BASE_LENGTH, "func_st");
 
     for (int i = 0; i < REGISTER_SIZE; i++) {
         proc->reg[i] = 0;
@@ -62,22 +64,24 @@ int ParseCode(const char *filename, processor *proc) {
     proc->code_length = (size_t) MeasureFile(filename);
     proc->code = (int*) calloc((size_t) proc->code_length, sizeof(int));
 
-    FILE* code_file = fopen(filename, "r");
-    if (code_file == NULL) return -fprintf(stderr, "%s:%d Can't open file: %s\n", __FILE__, __LINE__, filename);
+    FILE* input_file = fopen(filename, "r");
+    if (input_file == NULL) return -fprintf(stderr, "%s:%d Can't open file: %s\n",
+                                                   __FILE__, __LINE__, filename);
 
-#if BINARY == 0
-    int cmd = 0;
-    size_t ind = 0;
-    while (fscanf(code_file, "%d ", &cmd) != EOF) {
-        //printf("ind = %zu, cmd = %d\n", ind, cmd);
-        proc->code[ind] = cmd;
-        ind++;
-        //cmd = -1;
+#if BINARY > 0
+    if (fread(proc->code, sizeof(int), proc->code_length / sizeof(int), input_file)
+        != proc->code_length / sizeof(int)) {
+        return -fprintf(stderr, "%s:%d: Can't read all code\n", __FILE__, __LINE__);
     }
 #else
-
+    int cmd = 0;
+    size_t ind = 0;
+    while (fscanf(input_file, "%d ", &cmd) != EOF) {
+        proc->code[ind] = cmd;
+        ind++;
+    }
 #endif
-    fclose(code_file);
+    fclose(input_file);
     return 0;
 }
 
@@ -99,42 +103,27 @@ int RunCommand(processor *proc) {
     assert(proc);
     PRINT_LOG("Running command %d, with ip = %zu\n", proc->code[proc->ip], proc->ip);
     switch (proc->code[proc->ip]) {
-        case HLT:
-            return CmdHLT(proc);
-        case PUSH:
-            return CmdPUSH(proc);
-        case PUSH_R:
-            return CmdPUSHr(proc);
-        case POP:
-            return CmdPOP(proc);
-        case ADD:
-            return CmdADD(proc);
-        case SUB:
-            return CmdSUB(proc);
-        case DIV:
-            return CmdDIV(proc);
-        case MULT:
-            return CmdMULT(proc);
-        case OUT:
-            return CmdOUT(proc);
-        case JMP:
-            return CmdJMP(proc);
-        case JA:
-            return CmdJA(proc);
-        case JAE:
-            return CmdJAE(proc);
-        case JB:
-            return CmdJB(proc);
-        case JBE:
-            return CmdJBE(proc);
-        case JE:
-            return CmdJE(proc);
-        case JNE:
-            return CmdJNE(proc);
-        case DUMP:
-            return CmdDUMP(proc);
-        case TOP:
-            return CmdTOP(proc);
+        RUN_CMD(HLT, CmdHLT, proc)
+        RUN_CMD(PUSH, CmdPUSH, proc)
+        RUN_CMD(PUSHR, CmdPUSHR, proc)
+        RUN_CMD(POP, CmdPOP, proc)
+        RUN_CMD(IN, CmdIN, proc)
+        RUN_CMD(CALL, CmdCALL, proc)
+        RUN_CMD(RET, CmdRET, proc)
+        RUN_CMD(ADD, CmdADD, proc)
+        RUN_CMD(SUB, CmdSUB, proc)
+        RUN_CMD(DIV, CmdDIV, proc)
+        RUN_CMD(MULT, CmdMULT, proc)
+        RUN_CMD(OUT, CmdOUT, proc)
+        RUN_CMD(JMP, CmdJMP, proc)
+        RUN_CMD(JA, CmdJA, proc)
+        RUN_CMD(JAE, CmdJAE, proc)
+        RUN_CMD(JB, CmdJB, proc)
+        RUN_CMD(JBE, CmdJBE, proc)
+        RUN_CMD(JE, CmdJE, proc)
+        RUN_CMD(JNE, CmdJNE, proc)
+        RUN_CMD(DUMP, CmdDUMP, proc)
+        RUN_CMD(TOP, CmdTOP, proc)
         default:
             fprintf(stderr, "%s:%d: Got unknown command: %d", __FILE__, __LINE__, proc->code[proc->ip]);
             abort();

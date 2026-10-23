@@ -95,7 +95,7 @@ int ParseText(assembler *ass) {
                 expected_arg--;
             }
             else if (isalpha(symb)) {
-                if (ass->code[ass->size_code - 1] == PUSH) {ass->code[ass->size_code - 1] = PUSH_R;}
+                if (ass->code[ass->size_code - 1] == PUSH) {ass->code[ass->size_code - 1] = PUSHR;}
                 if (ParseVarArg(ass) < 0) {return -1;}
                 expected_arg--;
             }
@@ -163,26 +163,30 @@ int RecognizeCmd(const char cmd[], int *expected_arg) {
     assert(expected_arg);
     assert(cmd);
 
-    if (!strcmp(cmd, "HLT")) {return HLT;}
-    if (!strcmp(cmd, "PUSH")) {*expected_arg = 1; return PUSH;}
-    if (!strcmp(cmd, "PUSHr")) {*expected_arg = 1; return PUSH_R;}
-    if (!strcmp(cmd, "POP")) {*expected_arg = 1; return POP;}
-    if (!strcmp(cmd, "ADD")) {return ADD;}
-    if (!strcmp(cmd, "SUB")) {return SUB;}
-    if (!strcmp(cmd, "DIV")) {return DIV;}
-    if (!strcmp(cmd, "MULT")) {return MULT;}
-    if (!strcmp(cmd, "OUT")) {return OUT;}
-    if (!strcmp(cmd, "JMP")) {*expected_arg = 1; return JMP;}
-    if (!strcmp(cmd, "JA")) {*expected_arg = 1; return JA;}
-    if (!strcmp(cmd, "JAE")) {*expected_arg = 1; return JAE;}
-    if (!strcmp(cmd, "JB")) {*expected_arg = 1; return JB;}
-    if (!strcmp(cmd, "JBE")) {*expected_arg = 1; return JBE;}
-    if (!strcmp(cmd, "JE")) {*expected_arg = 1; return JE;}
-    if (!strcmp(cmd, "JNE")) {*expected_arg = 1; return JNE;}
-    if (!strcmp(cmd, "JPORTKI")) {*expected_arg = 1; return JPORTKI;}
-    if (!strcmp(cmd, "DUMP")) {return DUMP;}
-    if (!strcmp(cmd, "TOP")) {return TOP;}
-    else return -fprintf(stderr, "%s:%d: Unknown command: \"%s\"\n", __FILE__, __LINE__, cmd);
+    COMPARE_CMD(cmd, HLT, 0);
+    COMPARE_CMD(cmd, PUSH, 1);
+    COMPARE_CMD(cmd, PUSHR, 1);
+    COMPARE_CMD(cmd, POP, 1);
+    COMPARE_CMD(cmd, IN, 0);
+    COMPARE_CMD(cmd, CALL, 1);
+    COMPARE_CMD(cmd, RET, 0);
+    COMPARE_CMD(cmd, ADD, 0);
+    COMPARE_CMD(cmd, SUB, 0);
+    COMPARE_CMD(cmd, DIV, 0);
+    COMPARE_CMD(cmd, MULT, 0);
+    COMPARE_CMD(cmd, OUT, 0);
+    COMPARE_CMD(cmd, JMP, 1);
+    COMPARE_CMD(cmd, JA, 1);
+    COMPARE_CMD(cmd, JAE, 1);
+    COMPARE_CMD(cmd, JB, 1);
+    COMPARE_CMD(cmd, JBE, 1);
+    COMPARE_CMD(cmd, JE, 1);
+    COMPARE_CMD(cmd, JNE, 1);
+    COMPARE_CMD(cmd, JPORTKI, 1);
+    COMPARE_CMD(cmd, DUMP, 0);
+    COMPARE_CMD(cmd, TOP, 0);
+
+    return -fprintf(stderr, "%s:%d: Unknown command: \"%s\"\n", __FILE__, __LINE__, cmd);
 }
 
 
@@ -313,12 +317,27 @@ int UseLabel(assembler *ass) {
 }
 
 
-void CodeOutput(assembler *ass, const char *filename) {
+int CodeOutput(assembler *ass, const char *filename) {
     assert(ass);
 
     FILE* fp = fopen(filename, "w");
 
+    if (fp == NULL) {
+        return -fprintf(stderr, "%s:%d: Can't open a file to output code\n",
+                                __FILE__, __LINE__);
+    }
+
+    #if BINARY > 0
+        if (fwrite(ass->code, sizeof(int), ass->size_code, fp) != ass->size_code) {
+            return -fprintf(stderr, "%s:%d: Not all code have been written\n",
+                                    __FILE__, __LINE__);
+        }
+    #else
     for (size_t i = 0; i < ass->size_code; i++) {
         fprintf(fp, "%d ", ass->code[i]);
     }
+    #endif
+
+    fclose(fp);
+    return 0;
 }

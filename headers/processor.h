@@ -14,14 +14,17 @@
 enum _cmds {
     HLT = 0,
     PUSH = 1,
-    PUSH_R = 2,
+    PUSHR = 2,
     POP = 3,
-    ADD = 4,
-    SUB = 5,
-    DIV = 6,
-    MULT = 7,
-    OUT = 8,
-    JMP = 16,
+    IN = 4,
+    CALL = 5,
+    RET = 6,
+    ADD = 8,
+    SUB,
+    DIV,
+    MULT,
+    OUT = 16,
+    JMP = 32,
     JA,
     JAE,
     JB ,
@@ -32,6 +35,8 @@ enum _cmds {
     DUMP = 42,
     TOP = 67
 };
+
+#define RUN_CMD(cmd, func, proc) case cmd: return func(proc);
 
 typedef struct _file_info {
     off_t file_length;
@@ -46,6 +51,7 @@ typedef struct _processor {
     size_t ip;
     Stack_t *stack;
     int reg[REGISTER_SIZE];
+    Stack_t *func_st;
 } processor;
 
 const int MAX_CMD_LENGTH = 10;

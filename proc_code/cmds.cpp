@@ -12,7 +12,7 @@ int CmdPUSH(processor *proc) {
     return 0;
 }
 
-int CmdPUSHr(processor *proc) {
+int CmdPUSHR(processor *proc) {
     proc->ip++;
     StackPush(proc->stack, proc->reg[proc->code[proc->ip]]);
     proc->ip++;
@@ -25,6 +25,28 @@ int CmdPOP(processor *proc) {
     proc->ip++;
     return 0;
 }
+
+int CmdIN(processor *proc) {
+    int a = 0;
+    while (scanf("%d", &a) == 0) {printf("Wrong input try again\n");}
+    StackPush(proc->stack, a);
+    proc->ip++;
+    return 0;
+}
+
+int CmdCALL(processor *proc) {
+    StackPush(proc->func_st, (int) proc->ip + 2);
+    proc->ip = (size_t) proc->code[proc->ip + 1];
+    return 0;
+}
+
+int CmdRET(processor *proc) {
+    int ret_address = -1;
+    StackPop(proc->func_st, &ret_address);
+    proc->ip = (size_t) ret_address;
+    return 0;
+}
+
 
 int CmdADD(processor *proc) {
     int a1 = 0, a2 = 0;
@@ -161,24 +183,17 @@ int CmdJNE(processor *proc) {
 
 /*
 int CmdJPORTKI(processor *proc) {
-    int a = 0, b = 0;
-    StackPop(proc->stack, &a);
-    StackPop(proc->stack, &b);
-    if () {
-        return CmdJMP(proc);
-    }
-    else {
-        proc->ip++;
-        return 0;
-    }
+
 }
 */
+
 
 int CmdDUMP(processor *proc) {
     StackDump(proc->stack);
     proc->ip++;
     return 0;
 }
+
 
 int CmdTOP(processor *proc) {
     int a = 0;

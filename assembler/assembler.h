@@ -17,6 +17,10 @@ typedef struct _assembler {
 } assembler;
 
 
+#define PENSI 3
+#define COMPARE_CMD(CMD, EXP_CMD, EXP_ARG) \
+if (!strcmp(CMD, #EXP_CMD)) {*expected_arg = EXP_ARG; return EXP_CMD;}
+
 int Assemble(const char* input_file, const char* output_file);
 int AssemblerInit(assembler *ass);
 void AssemblerCleaner(assembler *ass);
@@ -33,6 +37,6 @@ int CodeRecalloc(assembler *ass);
 void SkipLine(assembler *ass);
 int GetLabel(assembler *ass);
 int UseLabel(assembler *ass);
-void CodeOutput(assembler *ass, const char *filename);
+int CodeOutput(assembler *ass, const char *filename);
 
 #endif
