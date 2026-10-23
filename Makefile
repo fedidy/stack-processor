@@ -35,7 +35,7 @@ endif
 
 MODE ?= proc
 
-BINARY ?= 0
+BINARY ?= 1
 
 STEP ?= 0
 
