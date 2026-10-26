@@ -16,12 +16,12 @@ off_t MeasureFile(const char* filename) {
 int FileCopy(file_info *file_inf, const char *filename) {
     assert(file_inf); assert(filename);
 
-    file_inf->file_length = MeasureFile(filename);
-    file_inf->file_copy = (char*) calloc((size_t) file_inf->file_length + 1, sizeof(char));
+    file_inf->length = MeasureFile(filename);
+    file_inf->code = (char*) calloc((size_t) file_inf->length + 1, sizeof(char));
 
     FILE* fp = fopen(filename, "r");
-    if (!fp) {return -fprintf(stderr, "%s:%d: Can't open file %s\n", __FILE__, __LINE__, filename);}
-    fread(file_inf->file_copy, sizeof(char), (size_t) file_inf->file_length, fp);
+    if (!fp) {OUTPUT_ERROR("Can't open file %s\n", filename); return -1;}
+    fread(file_inf->code, sizeof(char), (size_t) file_inf->length, fp);
     fclose(fp);
 
     return 0;
