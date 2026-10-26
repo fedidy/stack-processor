@@ -42,9 +42,9 @@ int Assemble(const char* input_file, const char* output_file) {
 int AssemblerInit(assembler *ass) {
     assert(ass);
 
-    ass->input_code.file_copy = NULL;
-    ass->input_code.file_length = 0;
-    ass->input_code.file_ind = 0;
+    ass->input_code.code = NULL;
+    ass->input_code.length = 0;
+    ass->input_code.ind = 0;
 
     ass->code = (int*) calloc(BASE_CODE_LENGTH, sizeof(int));
     if (ass->code == NULL) {
@@ -68,7 +68,7 @@ void AssemblerCleaner(assembler *ass) {
         ass->code[i] = NO_DATA;
     }
     ass->size_code = 0;
-    ass->input_code.file_ind = 0;
+    ass->input_code.ind = 0;
 }
 
 void AssDestructor(assembler *ass) {
@@ -77,9 +77,9 @@ void AssDestructor(assembler *ass) {
     free(ass->code);
     ass->size_code = 0;
     ass->cap_code = 0;
-    ass->input_code.file_ind = 0;
-    free(ass->input_code.file_copy);
-    ass->input_code.file_length = 0;
+    ass->input_code.ind = 0;
+    free(ass->input_code.code);
+    ass->input_code.length = 0;
 
     for (int i = 0; i < LABELS_SIZE; i++) {
         ass->labels[i] = 0;
@@ -91,8 +91,8 @@ int ParseText(assembler *ass) {
     assert(ass);
     char symb = '\0';
     int expected_arg = 0;
-    while (ass->input_code.file_ind < (size_t) ass->input_code.file_length) {
-        symb = ass->input_code.file_copy[ass->input_code.file_ind];
+    while (ass->input_code.ind < (size_t) ass->input_code.length) {
+        symb = ass->input_code.code[ass->input_code.ind];
         if (expected_arg != 0) {
             if (isdigit(symb)) {
                 //OUTPUT_ERROR("symb = %c, expected_arg = %d\n", symb, expected_arg);
@@ -101,14 +101,20 @@ int ParseText(assembler *ass) {
             }
             else if (isalpha(symb)) {
                 if (ass->code[ass->size_code - 1] == PUSH) {ass->code[ass->size_code - 1] = PUSHR;}
-                if (ParseVarArg(ass) < 0) {return -1;}
+                if (ParseRegArg(ass) < 0) {return -1;}
                 expected_arg--;
             }
             else if (symb == ' ') {
-                ass->input_code.file_ind++;
+                ass->input_code.ind++;
             }
             else if (symb == ':') {
                 UseLabel(ass);
+                expected_arg--;
+            }
+            else if (symb == '[') {
+                if (ass->code[ass->size_code - 1] == PUSH) {ass->code[ass->size_code - 1] = PUSHM;}
+                if (ass->code[ass->size_code - 1] == POP) {ass->code[ass->size_code - 1] = POPM;}
+                ParseMemory(ass);
                 expected_arg--;
             }
             else {
@@ -132,7 +138,7 @@ int ParseText(assembler *ass) {
             }
             else if (isspace(symb)) {
                 //if (expected_arg != 0) {OUTPUT_ERROR("Line ended when expected_arg = %d\n", __FILE__, __LINE__, expected_arg);}
-                ass->input_code.file_ind++;
+                ass->input_code.ind++;
             }
             else if (symb == ':') {
                 GetLabel(ass);
@@ -157,10 +163,10 @@ int ParseCmd(assembler *ass) {
     cmd_names cmd_num = NO_CMD;
     char cmd_name[MAX_CMD_LENGTH + 1] = "";
     int ind = 0;
-    while (isalpha(ass->input_code.file_copy[ass->input_code.file_ind])) {
-        cmd_name[ind] = ass->input_code.file_copy[ass->input_code.file_ind];
+    while (isalpha(ass->input_code.code[ass->input_code.ind])) {
+        cmd_name[ind] = ass->input_code.code[ass->input_code.ind];
         ind++;
-        ass->input_code.file_ind++;
+        ass->input_code.ind++;
     }
     if (RecognizeCmd(cmd_name, &expected_arg, &cmd_num) < 0) return -1;
     if (cmd_num < 0) return -1;
@@ -213,26 +219,26 @@ int ParseArg(assembler *ass) {
 
     int arg = 0;
     int symb_num = 0;
-    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &arg, &symb_num)) {
+    if (!sscanf(ass->input_code.code + ass->input_code.ind, "%d%n", &arg, &symb_num)) {
         OUTPUT_ERROR("Can't scan arg\n");
         return -1;
     }
     if (symb_num < 0) {abort();}
 
-    ass->input_code.file_ind += (unsigned) symb_num;
+    ass->input_code.ind += (unsigned) symb_num;
     return PushCode(ass, arg);
 }
 
 
-int ParseVarArg(assembler *ass) {
+int ParseRegArg(assembler *ass) {
     assert(ass);
 
     char var_name[MAX_REG_LENGTH + 1] = "";
     int ind = 0;
-    while (isalpha(ass->input_code.file_copy[ass->input_code.file_ind])) {
-        var_name[ind] = ass->input_code.file_copy[ass->input_code.file_ind];
+    while (isalpha(ass->input_code.code[ass->input_code.ind])) {
+        var_name[ind] = ass->input_code.code[ass->input_code.ind];
         ind++;
-        ass->input_code.file_ind++;
+        ass->input_code.ind++;
     }
     int var = RecognizeVar(var_name);
     if (var < 0) return -1;
@@ -291,22 +297,22 @@ int CodeRecalloc(assembler *ass) {
 void SkipLine(assembler *ass) {
     assert(ass);
 
-    while(ass->input_code.file_copy[ass->input_code.file_ind] != '\n') {
-        ass->input_code.file_ind++;
+    while(ass->input_code.code[ass->input_code.ind] != '\n') {
+        ass->input_code.ind++;
     }
 
-    ass->input_code.file_ind++;
+    ass->input_code.ind++;
 }
 
 
 int GetLabel(assembler *ass) {
     assert(ass);
 
-    ass->input_code.file_ind++;
+    ass->input_code.ind++;
 
     int label_num = 0;
     int symb_num = 0;
-    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind,
+    if (!sscanf(ass->input_code.code + ass->input_code.ind,
                 "%d%n", &label_num, &symb_num)) {
         OUTPUT_ERROR("Can't scan arg\n");
         return -1;
@@ -314,11 +320,11 @@ int GetLabel(assembler *ass) {
 
     if (symb_num < 0) {abort();}
 
-    ass->input_code.file_ind += (unsigned) symb_num;
+    ass->input_code.ind += (unsigned) symb_num;
 
     ass->labels[label_num] = (int) ass->size_code;
 
-    ass->input_code.file_ind++;
+    ass->input_code.ind++;
 
     return 0;
 }
@@ -326,24 +332,48 @@ int GetLabel(assembler *ass) {
 int UseLabel(assembler *ass) {
     assert(ass);
 
-    ass->input_code.file_ind++;
+    ass->input_code.ind++;
 
     int label_num = 0;
     int symb_num = 0;
-    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind,
+    if (!sscanf(ass->input_code.code + ass->input_code.ind,
                 "%d%n", &label_num, &symb_num)) {
         OUTPUT_ERROR("Can't scan arg\n");
         return -1;
     }
     assert(symb_num >= 0);
 
-    ass->input_code.file_ind += (unsigned) symb_num;
+    ass->input_code.ind += (unsigned) symb_num;
 
     PushCode(ass, ass->labels[label_num]);
 
-    ass->input_code.file_ind++;
+    ass->input_code.ind++;
 
     return 0;
+}
+
+
+int ParseMemory(assembler *ass) {
+    assert(ass);
+
+    ass->input_code.ind++;
+
+    int mem_num = 0;
+    int symb_num = 0;
+    if (!sscanf(ass->input_code.code + ass->input_code.ind,
+                "%d%n", &mem_num, &symb_num)) {
+        OUTPUT_ERROR("Can't scan arg\n");
+        return -1;
+    }
+    assert(symb_num >= 0);
+
+    ass->input_code.ind += (unsigned) symb_num;
+    if (ass->input_code.code[ass->input_code.ind] != ']') {
+        OUTPUT_ERROR("Got %c instead of ']'\n", ass->input_code.code[ass->input_code.ind]);
+    }
+    ass->input_code.ind++;
+
+    return PushCode(ass, mem_num);
 }
 
 

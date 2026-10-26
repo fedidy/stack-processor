@@ -39,8 +39,11 @@ void ProcessorInit(processor *proc) {
     proc->func_st = (Stack_t*) malloc(sizeof(Stack_t));
     StackCtor(proc->func_st, BASE_LENGTH, "func_st");
 
-    for (int i = 0; i < REGISTER_COUNT; i++) {
+    for (size_t i = 0; i < REGISTER_COUNT; i++) {
         proc->reg[i] = 0;
+    }
+    for (size_t i = 0; i < RAM_SIZE; i++) {
+        proc->ram[i] = 0;
     }
 }
 
@@ -52,8 +55,11 @@ void ProcessorDtor(processor *proc) {
     proc->ip = 0;
     StackDtor(proc->stack);
 
-    for (int i = 0; i < REGISTER_COUNT; i++) {
+    for (size_t i = 0; i < REGISTER_COUNT; i++) {
         proc->reg[i] = 0;
+    }
+    for (size_t i = 0; i < RAM_SIZE; i++) {
+        proc->ram[i] = 0;
     }
 }
 
@@ -109,7 +115,9 @@ int RunCommand(processor *proc) {
         RUN_CMD(HLT, CmdHLT, proc)
         RUN_CMD(PUSH, CmdPUSH, proc)
         RUN_CMD(PUSHR, CmdPUSHR, proc)
+        RUN_CMD(PUSHM, CmdPUSHM, proc)
         RUN_CMD(POP, CmdPOP, proc)
+        RUN_CMD(POPM, CmdPOPM, proc)
         RUN_CMD(IN, CmdIN, proc)
         RUN_CMD(CALL, CmdCALL, proc)
         RUN_CMD(RET, CmdRET, proc)

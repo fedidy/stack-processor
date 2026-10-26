@@ -10,12 +10,16 @@
     #define WAIT_INP() (void) 0
 #endif
 
+#define OUTPUT_ERROR(text, ...)\
+fprintf(stderr, "%s:%d:" text, __FILE__, __LINE__ __VA_OPT__(,) __VA_ARGS__)
 
 typedef enum _cmd_names {
-    HLT = 0,
+    HLT,
     PUSH,
     PUSHR,
+    PUSHM,
     POP,
+    POPM,
     IN,
     CALL,
     RET,
@@ -34,27 +38,24 @@ typedef enum _cmd_names {
     NO_CMD
 } cmd_names;
 
-#define OUTPUT_ERROR(text, ...)\
-fprintf(stderr, "%s:%d:" text, __FILE__, __LINE__ __VA_OPT__(,) __VA_ARGS__)
-
 typedef struct _file_info {
-    off_t file_length;
-    char* file_copy;
-    size_t file_ind;
+    off_t length;
+    char* code;
+    size_t ind;
 } file_info;
 
-const int REGISTER_COUNT = 26;
+const size_t REGISTER_COUNT = 26;
+const size_t RAM_SIZE = 1024;
+const int MAX_CMD_LENGTH = 10;
+const int MAX_REG_LENGTH = 2;
 typedef struct _processor {
     int *code;
     size_t code_length;
     size_t ip;
     Stack_t *stack;
-    int reg[REGISTER_COUNT];
     Stack_t *func_st;
+    int reg[REGISTER_COUNT];
+    int ram[RAM_SIZE];
 } processor;
-
-const int MAX_CMD_LENGTH = 10;
-const int MAX_REG_LENGTH = 2;
-
 
 #endif

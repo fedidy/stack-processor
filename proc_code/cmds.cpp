@@ -19,9 +19,23 @@ int CmdPUSHR(processor *proc) {
     return 0;
 }
 
+int CmdPUSHM(processor *proc) {
+    proc->ip++;
+    StackPush(proc->stack, proc->ram[proc->code[proc->ip]]);
+    proc->ip++;
+    return 0;
+}
+
 int CmdPOP(processor *proc) {
     proc->ip++;
     StackPop(proc->stack, &proc->reg[proc->code[proc->ip]]);
+    proc->ip++;
+    return 0;
+}
+
+int CmdPOPM(processor *proc) {
+    proc->ip++;
+    StackPop(proc->stack, &proc->ram[proc->code[proc->ip]]);
     proc->ip++;
     return 0;
 }

@@ -6,7 +6,10 @@
 int CmdHLT(...);
 int CmdPUSH(processor *proc);
 int CmdPUSHR(processor *proc);
+int CmdPUSHM(processor *proc);
 int CmdPOP(processor *proc);
+int CmdPOPM(processor *proc);
+
 int CmdIN(processor *proc);
 int CmdCALL(processor *proc);
 int CmdRET(processor *proc);

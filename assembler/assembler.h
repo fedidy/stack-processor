@@ -25,7 +25,7 @@ int ParseText(assembler *ass);
 int ParseCmd(assembler *ass);
 int RecognizeCmd(const char cmd[], int *expected_arg, cmd_names *cmd_num);
 int ParseArg(assembler *ass);
-int ParseVarArg(assembler *ass);
+int ParseRegArg(assembler *ass);
 int RecognizeVar(const char var_name[]);
 int PushCode(assembler *ass, int elem);
 int CodeReallocUp(assembler *ass);
@@ -33,6 +33,7 @@ int CodeRecalloc(assembler *ass);
 void SkipLine(assembler *ass);
 int GetLabel(assembler *ass);
 int UseLabel(assembler *ass);
+int ParseMemory(assembler *ass);
 int CodeOutput(assembler *ass, const char *filename);
 
 #endif
