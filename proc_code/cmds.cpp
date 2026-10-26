@@ -2,7 +2,7 @@
 #include "../headers/cmds.h"
 
 int CmdHLT(...) {
-    return HLT_VAL;
+    return -1;
 }
 
 int CmdPUSH(processor *proc) {

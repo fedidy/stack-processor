@@ -92,7 +92,7 @@ int RunCode(processor *proc) {
     assert(proc);
 
     while (proc->ip < proc->code_length) {
-        if (RunCommand(proc) == HLT_VAL) {
+        if (RunCommand(proc) < 0) {
             return 0;
         }
         WAIT_INP();

@@ -55,7 +55,6 @@ typedef struct _processor {
 
 const int MAX_CMD_LENGTH = 10;
 const int MAX_REG_LENGTH = 2;
-const int HLT_VAL = 6767;
 
 
 #endif
