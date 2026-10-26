@@ -17,17 +17,13 @@ typedef struct _assembler {
 } assembler;
 
 
-#define PENSI 3
-#define COMPARE_CMD(CMD, EXP_CMD, EXP_ARG) \
-if (!strcmp(CMD, #EXP_CMD)) {*expected_arg = EXP_ARG; return EXP_CMD;}
-
 int Assemble(const char* input_file, const char* output_file);
 int AssemblerInit(assembler *ass);
 void AssemblerCleaner(assembler *ass);
 void AssDestructor(assembler *ass);
 int ParseText(assembler *ass);
 int ParseCmd(assembler *ass);
-int RecognizeCmd(const char cmd[], int *expected_arg);
+int RecognizeCmd(const char cmd[], int *expected_arg, cmd_names *cmd_num);
 int ParseArg(assembler *ass);
 int ParseVarArg(assembler *ass);
 int RecognizeVar(const char var_name[]);

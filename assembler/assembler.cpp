@@ -9,8 +9,10 @@
 
 
 int main(const int argc, const char* argv[]) {
-    if (argc < 3)
-        return -fprintf(stderr, "%s:%d: No filename, bro\n", __FILE__, __LINE__);
+    if (argc < 3) {
+        OUTPUT_ERROR("No filename, bro\n");
+        return -1;
+    }
 
     Assemble(argv[1], argv[2]);
 
@@ -45,7 +47,10 @@ int AssemblerInit(assembler *ass) {
     ass->input_code.file_ind = 0;
 
     ass->code = (int*) calloc(BASE_CODE_LENGTH, sizeof(int));
-    if (ass->code == NULL) {return -fprintf(stderr, "%s:%d: Couldn't initialize ass->code\n", __FILE__, __LINE__);}
+    if (ass->code == NULL) {
+        OUTPUT_ERROR("Couldn't initialize ass->code\n");
+        return -1;
+    }
     ass->cap_code = BASE_CODE_LENGTH;
     ass->size_code = 0;
 
@@ -90,7 +95,7 @@ int ParseText(assembler *ass) {
         symb = ass->input_code.file_copy[ass->input_code.file_ind];
         if (expected_arg != 0) {
             if (isdigit(symb)) {
-                //fprintf(stderr, "%s:%d: symb = %c, expected_arg = %d\n", __FILE__, __LINE__, symb, expected_arg);
+                //OUTPUT_ERROR("symb = %c, expected_arg = %d\n", symb, expected_arg);
                 if (ParseArg(ass) < 0) {return -1;}
                 expected_arg--;
             }
@@ -107,8 +112,8 @@ int ParseText(assembler *ass) {
                 expected_arg--;
             }
             else {
-                fprintf(stderr, "%s:%d: Got not expected symb (wanted argument): %c\n", __FILE__, __LINE__, symb);
-                abort();
+                OUTPUT_ERROR("Got not expected symb (wanted argument): %c\n", symb);
+                return -1;
             }
         }
         else {
@@ -119,25 +124,29 @@ int ParseText(assembler *ass) {
                 break;
             }
             else if (isdigit(symb)) {
-                return -fprintf(stderr, "%s:%d: Got num argument when command expected: expected_arg = %d\n", __FILE__, __LINE__, expected_arg);
+                OUTPUT_ERROR("Got num argument when command expected: expected_arg = %d\n", expected_arg);
+                return -1;
             }
             else if (symb == ';') {
                 SkipLine(ass);
             }
             else if (isspace(symb)) {
-                //if (expected_arg != 0) {return -fprintf(stderr, "%s:%d: Line ended when expected_arg = %d\n", __FILE__, __LINE__, expected_arg);}
+                //if (expected_arg != 0) {OUTPUT_ERROR("Line ended when expected_arg = %d\n", __FILE__, __LINE__, expected_arg);}
                 ass->input_code.file_ind++;
             }
             else if (symb == ':') {
                 GetLabel(ass);
             }
             else {
-                fprintf(stderr, "%s:%d: Got not expected symb: %c\n", __FILE__, __LINE__, symb);
+                OUTPUT_ERROR("Got not expected symb: %c\n", symb);
                 abort();
             }
         }
     }
-    if (expected_arg != 0) return -fprintf(stderr, "%s:%d: By the end of parsing expected_arg = %d\n", __FILE__, __LINE__, expected_arg);
+    if (expected_arg != 0) {
+        OUTPUT_ERROR("By the end of parsing expected_arg = %d\n", expected_arg);
+        return -1;
+    }
     return 0;
 }
 
@@ -145,6 +154,7 @@ int ParseCmd(assembler *ass) {
     assert(ass);
 
     int expected_arg = 0;
+    cmd_names cmd_num = NO_CMD;
     char cmd_name[MAX_CMD_LENGTH + 1] = "";
     int ind = 0;
     while (isalpha(ass->input_code.file_copy[ass->input_code.file_ind])) {
@@ -152,16 +162,21 @@ int ParseCmd(assembler *ass) {
         ind++;
         ass->input_code.file_ind++;
     }
-    int cmd = RecognizeCmd(cmd_name, &expected_arg);
-    if (cmd < 0) return -1;
-    if (PushCode(ass, cmd)) return -1;
+    if (RecognizeCmd(cmd_name, &expected_arg, &cmd_num) < 0) return -1;
+    if (cmd_num < 0) return -1;
+    if (PushCode(ass, cmd_num)) return -1;
 
     return expected_arg;
 }
 
-int RecognizeCmd(const char cmd[], int *expected_arg) {
+int RecognizeCmd(const char cmd[], int *expected_arg, cmd_names *cmd_num) {
     assert(expected_arg);
+    assert(cmd_num);
     assert(cmd);
+
+
+    #define COMPARE_CMD(CMD, EXP_CMD, EXP_ARG) \
+    if (!strcmp(CMD, #EXP_CMD)) {*expected_arg = EXP_ARG; *cmd_num = EXP_CMD; return 0;}
 
     COMPARE_CMD(cmd, HLT, 0);
     COMPARE_CMD(cmd, PUSH, 1);
@@ -186,7 +201,10 @@ int RecognizeCmd(const char cmd[], int *expected_arg) {
     COMPARE_CMD(cmd, DUMP, 0);
     COMPARE_CMD(cmd, TOP, 0);
 
-    return -fprintf(stderr, "%s:%d: Unknown command: \"%s\"\n", __FILE__, __LINE__, cmd);
+    #undef COMPARE_CMD
+
+    OUTPUT_ERROR("Unknown command: \"%s\"\n", cmd);
+    return -1;
 }
 
 
@@ -195,8 +213,10 @@ int ParseArg(assembler *ass) {
 
     int arg = 0;
     int symb_num = 0;
-    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &arg, &symb_num))
-        return -fprintf(stderr, "%s:%d: Can't scan arg\n", __FILE__, __LINE__);
+    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &arg, &symb_num)) {
+        OUTPUT_ERROR("Can't scan arg\n");
+        return -1;
+    }
     if (symb_num < 0) {abort();}
 
     ass->input_code.file_ind += (unsigned) symb_num;
@@ -207,7 +227,7 @@ int ParseArg(assembler *ass) {
 int ParseVarArg(assembler *ass) {
     assert(ass);
 
-    char var_name[MAX_VAR_LENGTH + 1] = "";
+    char var_name[MAX_REG_LENGTH + 1] = "";
     int ind = 0;
     while (isalpha(ass->input_code.file_copy[ass->input_code.file_ind])) {
         var_name[ind] = ass->input_code.file_copy[ass->input_code.file_ind];
@@ -254,8 +274,11 @@ int CodeRecalloc(assembler *ass) {
     assert(ass);
 
     ass->code = (int*) realloc(ass->code, sizeof(int) * ass->cap_code);
-    if (!ass->code) return -fprintf(stderr, "%s:%d: Can't reallocate code %p, capacity = %zu, size = %zu\n",
-                                            __FILE__, __LINE__, ass->code, ass->cap_code, ass->size_code);
+    if (!ass->code) {
+    OUTPUT_ERROR("Can't reallocate code %p, capacity = %zu, size = %zu\n",
+                 ass->code, ass->cap_code, ass->size_code);
+    return -1;
+    }
 
     for (size_t i = ass->size_code; i < ass->cap_code; i++) {
         ass->code[i] = 0;
@@ -283,8 +306,12 @@ int GetLabel(assembler *ass) {
 
     int label_num = 0;
     int symb_num = 0;
-    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &label_num, &symb_num))
-        return -fprintf(stderr, "%s:%d: Can't scan arg\n", __FILE__, __LINE__);
+    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind,
+                "%d%n", &label_num, &symb_num)) {
+        OUTPUT_ERROR("Can't scan arg\n");
+        return -1;
+    }
+
     if (symb_num < 0) {abort();}
 
     ass->input_code.file_ind += (unsigned) symb_num;
@@ -303,9 +330,12 @@ int UseLabel(assembler *ass) {
 
     int label_num = 0;
     int symb_num = 0;
-    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind, "%d%n", &label_num, &symb_num))
-        return -fprintf(stderr, "%s:%d: Can't scan arg\n", __FILE__, __LINE__);
-    if (symb_num < 0) {abort();}
+    if (!sscanf(ass->input_code.file_copy + ass->input_code.file_ind,
+                "%d%n", &label_num, &symb_num)) {
+        OUTPUT_ERROR("Can't scan arg\n");
+        return -1;
+    }
+    assert(symb_num >= 0);
 
     ass->input_code.file_ind += (unsigned) symb_num;
 
@@ -323,14 +353,13 @@ int CodeOutput(assembler *ass, const char *filename) {
     FILE* fp = fopen(filename, "w");
 
     if (fp == NULL) {
-        return -fprintf(stderr, "%s:%d: Can't open a file to output code\n",
-                                __FILE__, __LINE__);
+        OUTPUT_ERROR("Can't open a file to output code\n");
+        return -1;
     }
 
     #if BINARY > 0
         if (fwrite(ass->code, sizeof(int), ass->size_code, fp) != ass->size_code) {
-            return -fprintf(stderr, "%s:%d: Not all code have been written\n",
-                                    __FILE__, __LINE__);
+            OUTPUT_ERROR("Not all code have been written\n");
         }
     #else
     for (size_t i = 0; i < ass->size_code; i++) {

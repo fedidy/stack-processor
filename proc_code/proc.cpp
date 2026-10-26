@@ -39,7 +39,7 @@ void ProcessorInit(processor *proc) {
     proc->func_st = (Stack_t*) malloc(sizeof(Stack_t));
     StackCtor(proc->func_st, BASE_LENGTH, "func_st");
 
-    for (int i = 0; i < REGISTER_SIZE; i++) {
+    for (int i = 0; i < REGISTER_COUNT; i++) {
         proc->reg[i] = 0;
     }
 }
@@ -52,7 +52,7 @@ void ProcessorDtor(processor *proc) {
     proc->ip = 0;
     StackDtor(proc->stack);
 
-    for (int i = 0; i < REGISTER_SIZE; i++) {
+    for (int i = 0; i < REGISTER_COUNT; i++) {
         proc->reg[i] = 0;
     }
 }
@@ -65,8 +65,10 @@ int ParseCode(const char *filename, processor *proc) {
     proc->code = (int*) calloc((size_t) proc->code_length, sizeof(int));
 
     FILE* input_file = fopen(filename, "r");
-    if (input_file == NULL) return -fprintf(stderr, "%s:%d Can't open file: %s\n",
-                                                   __FILE__, __LINE__, filename);
+    if (input_file == NULL) {
+        OUTPUT_ERROR("Can't open file: %s\n", filename);
+        return -1;
+    }
 
 #if BINARY > 0
     if (fread(proc->code, sizeof(int), proc->code_length / sizeof(int), input_file)
@@ -93,7 +95,7 @@ int RunCode(processor *proc) {
         if (RunCommand(proc) == HLT_VAL) {
             return 0;
         }
-        WAIT_INP
+        WAIT_INP();
     }
     fprintf(stderr, "Code ended w/o HLT\n");
     return -1;
@@ -102,6 +104,7 @@ int RunCode(processor *proc) {
 int RunCommand(processor *proc) {
     assert(proc);
     PRINT_LOG("Running command %d, with ip = %zu\n", proc->code[proc->ip], proc->ip);
+    #define RUN_CMD(cmd, func, proc) case cmd: return func(proc);
     switch (proc->code[proc->ip]) {
         RUN_CMD(HLT, CmdHLT, proc)
         RUN_CMD(PUSH, CmdPUSH, proc)
@@ -128,4 +131,5 @@ int RunCommand(processor *proc) {
             fprintf(stderr, "%s:%d: Got unknown command: %d", __FILE__, __LINE__, proc->code[proc->ip]);
             abort();
     }
+    #undef RUN_CMD
 }

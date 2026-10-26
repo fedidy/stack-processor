@@ -70,6 +70,10 @@ int CmdDIV(processor *proc) {
     int a1 = 0, a2 = 0;
     StackPop(proc->stack, &a1);
     StackPop(proc->stack, &a2);
+    if (a2 == 0) {
+        OUTPUT_ERROR("Division by zero\n");
+        return -1;
+    }
     StackPush(proc->stack, a1 / a2);
     proc->ip++;
     return 0;
