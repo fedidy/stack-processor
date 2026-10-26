@@ -103,7 +103,7 @@ Error_info StackPop(Stack_t *const stk, stack_elem_t *const elem) {
     PRINT_LOG("Poped elem = " PRINT_DATA "\n", *elem);
 
 
-    if (stk->size == (stk->capacity / CAPACITY_DOWN_COEF) + 1) {
+    if (stk->size == (stk->capacity / CAPACITY_DOWN_COEF) - 1) {
         return StackReallocDown(stk);
     }
 
