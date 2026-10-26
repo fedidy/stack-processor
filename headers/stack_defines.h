@@ -116,9 +116,6 @@ struct Stack_t {
     size_t capacity;
 };
 
-const int CAPACITY_UP_COEF = 2;
-const int CAPACITY_DOWN_COEF = 4;
-const int BASE_LENGTH = 5;
 const size_t CAPACITY_MAX = (size_t) -1000;
 
 #endif
